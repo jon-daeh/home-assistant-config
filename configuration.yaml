@@ -1,0 +1,104 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+logger:
+  default: info
+  logs:
+    homeassistant.components.rest: debug
+
+recorder:
+ commit_interval: 60
+ purge_keep_days: 14
+ include:
+  entities:
+    - sensor.tibber_price_rating
+    - sensor.tibber_price_sorted
+    - sensor.electricity_price_nedre_svartberget_7_hovedenhet
+    - sensor.power_nedre_svartberget_7_hovedenhet
+  domains:
+    - switch
+
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+sensor: !include sensors.yaml
+
+rest:
+  - scan_interval: 360001
+    resource: https://api.tibber.com/v1-beta/gql
+    method: POST
+    headers:
+      Authorization: !secret tibber_api_token
+      Content-Type: application/json
+      User-Agent: REST
+    payload: '{"query": "{
+                  viewer {
+                    homes {
+                      currentSubscription {
+                        priceRating {
+                          hourly{entries{level time}}
+                        }
+                        priceInfo {
+                          today {
+                            total
+                            startsAt
+                          }
+                        }
+                      }
+                    }
+                  }
+                }"}'
+    sensor:
+    -   name: tibber_price_rating
+        value_template: >
+                {%if value_json.data is defined%}
+                  {% set data = value_json.data.viewer.homes[0].currentSubscription.priceRating.hourly.entries%}
+                  {% if data %}
+                    {% set ns = namespace(price_levels_today = '')%}
+                    {% for price_level in data %}
+                      {% if strptime(price_level.time, "%Y-%m-%dT%H:%M:%S.%f%z").day == now().day%}
+                        {% if price_level.level == "HIGH"%}
+                          {% set ns.price_levels_today = ns.price_levels_today ~ "H" %}
+                        {% elif price_level.level == "NORMAL"%}
+                          {% set ns.price_levels_today = ns.price_levels_today ~ "N" %}
+                        {% elif price_level.level == "LOW"%}
+                          {% set ns.price_levels_today = ns.price_levels_today ~ "L" %}
+                        {% else %}
+                          {% set ns.price_levels_today = ns.price_levels_today ~ "-" %}
+                        {%endif%}
+                      {%endif%}
+                    {% endfor%}
+                    {{ ns.price_levels_today }}
+                  {% else %}
+                    {{ "ERROR" }}
+                  {% endif %}
+                {%else%}
+                  {{ "ERROR"}}
+                {% endif %}
+    - name: tibber_price_sorted
+      value_template: >
+              {%if value_json.data is defined%}
+                {% if value_json.data.viewer.homes[0].currentSubscription.priceInfo.today %}
+                  {% set data_sorted = value_json.data.viewer.homes[0].currentSubscription.priceInfo.today | sort(attribute="total")%}
+                  {% set ns = namespace(price_sorted_today = '')%}
+                  {% for price in data_sorted %}
+                      {% set ns.price_sorted_today = ns.price_sorted_today ~ "{0},".format(strptime(price.startsAt, "%Y-%m-%dT%H:%M:%S.%f%z").hour) %}
+                  {% endfor%}
+                  {{ ns.price_sorted_today }}
+                {%else%}
+                  {{ "ERROR" }}
+                {% endif %}
+              {% else %}
+                {{ "ERROR"}}
+              {% endif %}
+              

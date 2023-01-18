@@ -1,0 +1,173 @@
+- id: '1672604983746'
+  alias: Styr etter prisnivå
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.electricity_price_nedre_svartberget_7_hovedenhet
+    attribute: price_level
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: sensor.electricity_price_nedre_svartberget_7_hovedenhet
+      attribute: price_level
+      state: '''EXPENSIVE'''
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: sensor.electricity_price_nedre_svartberget_7_hovedenhet
+        attribute: price_level
+        state: '''VERY_EXPENSIVE'''
+    then:
+    - type: turn_off
+      device_id: 7c651e89aa471541605601aa383fbbc7
+      entity_id: switch.noe_annet_socket
+      domain: switch
+    else:
+    - type: turn_on
+      device_id: 7c651e89aa471541605601aa383fbbc7
+      entity_id: switch.noe_annet_socket
+      domain: switch
+  mode: single
+- id: '1673516310252'
+  alias: Update Tibber sensors
+  description: ''
+  trigger:
+  - platform: time_pattern
+    hours: '0'
+    minutes: '0'
+    seconds: '30'
+  condition: []
+  action:
+  - service: homeassistant.update_entity
+    data: {}
+    target:
+      entity_id:
+      - sensor.tibber_price_rating
+      - sensor.tibber_price_sorted
+  mode: single
+- id: '1673517867955'
+  alias: Stryr etter price rating mye av
+  description: ''
+  trigger:
+  - platform: time_pattern
+    hours: '*'
+    minutes: '1'
+    seconds: '0'
+  condition: []
+  action:
+  - if:
+    - condition: template
+      value_template: '{{ (states(''sensor.tibber_price_rating'')|list)[now().hour]
+        ==''L'' }}'
+    then:
+    - type: turn_on
+      device_id: 7c651e89aa471541605601aa383fbbc7
+      entity_id: switch.noe_annet_socket
+      domain: switch
+    else:
+    - type: turn_off
+      device_id: 7c651e89aa471541605601aa383fbbc7
+      entity_id: switch.noe_annet_socket
+      domain: switch
+  mode: single
+- id: '1673526474977'
+  alias: Styr etter pricerating mye på
+  description: ''
+  trigger:
+  - platform: time_pattern
+    hours: '*'
+    minutes: '1'
+    seconds: '0'
+  condition: []
+  action:
+  - if:
+    - condition: template
+      value_template: '{{((states(''sensor.tibber_price_rating'')|list)[now().hour]
+        ==''H'') and (states(''sensor.tibber_price_rating'') not in [''unknown'',
+        ''unavailable'', ''ERROR''])}}'
+    then:
+    - type: turn_off
+      device_id: 8fd91bf5376be93746c2f18a666afc26
+      entity_id: switch.panelovn_teknisk_bod_socket
+      domain: switch
+    else:
+    - type: turn_on
+      device_id: 8fd91bf5376be93746c2f18a666afc26
+      entity_id: switch.panelovn_teknisk_bod_socket
+      domain: switch
+  mode: single
+- id: '1673847467801'
+  alias: Skru på lampe stuebord
+  description: ''
+  trigger:
+  - platform: time_pattern
+    hours: '7'
+    minutes: '0'
+    seconds: '0'
+  condition: []
+  action:
+  - type: turn_on
+    device_id: 7c651e89aa471541605601aa383fbbc7
+    entity_id: switch.noe_annet_socket
+    domain: switch
+  mode: single
+- id: '1673847511225'
+  alias: Skru av lampe stuebord
+  description: ''
+  trigger:
+  - platform: time_pattern
+    hours: '23'
+    minutes: '0'
+    seconds: '0'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 7c651e89aa471541605601aa383fbbc7
+    entity_id: switch.noe_annet_socket
+    domain: switch
+  mode: single
+- id: '1673848477996'
+  alias: På halve døgnet
+  description: ''
+  trigger:
+  - platform: time_pattern
+    hours: '*'
+    minutes: '1'
+    seconds: '0'
+  condition: []
+  action:
+  - if:
+    - condition: template
+      value_template: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:15])
+        or (states(''sensor.tibber_price_sorted'') in [''unknown'', ''unavailable'',
+        ''ERROR''])}}'
+    then:
+    - type: turn_on
+      device_id: 1dc1b18994f4b9d6ad9b6433bba1462d
+      entity_id: switch.panelovn_kjellerstue_socket
+      domain: switch
+    else:
+    - type: turn_off
+      device_id: 1dc1b18994f4b9d6ad9b6433bba1462d
+      entity_id: switch.panelovn_kjellerstue_socket
+      domain: switch
+  mode: single
+- id: '1674037454066'
+  alias: Validate Tibber sensors
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  condition:
+  - condition: template
+    value_template: '{{ states(''sensor.tibber_price_rating'') in [''unknown'', ''unavailable'',
+      ''ERROR'']}}'
+  action:
+  - service: automation.trigger
+    data:
+      skip_condition: true
+    target:
+      entity_id: automation.update_price_rating
+  mode: single
