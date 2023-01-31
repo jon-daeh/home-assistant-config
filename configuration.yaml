@@ -10,10 +10,10 @@ frontend:
 tts:
   - platform: google_translate
 
-logger:
-  default: info
-  logs:
-    homeassistant.components.rest: debug
+#logger:
+#  default: info
+#  logs:
+#    homeassistant.components.rest: debug
 
 recorder:
  commit_interval: 60
@@ -32,6 +32,17 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 sensor: !include sensors.yaml
+
+template:
+  - trigger:
+    - platform: time_pattern
+      minutes: 1
+      second: 0
+    binary_sensor:
+    - name: price_in_15_lowest_hours
+      state: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:15])
+        or (states(''sensor.tibber_price_sorted'') in [''unknown'', ''unavailable'',
+        ''ERROR''])}}'
 
 rest:
   - scan_interval: 360001
