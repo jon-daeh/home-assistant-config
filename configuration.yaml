@@ -24,6 +24,9 @@ recorder:
     - sensor.tibber_price_sorted
     - sensor.electricity_price_nedre_svartberget_7_hovedenhet
     - sensor.power_nedre_svartberget_7_hovedenhet
+    - sensor.current_hour_price_rating_today
+    - binary_sensor.current_hour_among_8_cheapest_today
+    - binary_sensor.current_hour_among_16_cheapest_today
   domains:
     - switch
 
@@ -35,15 +38,25 @@ sensor: !include sensors.yaml
 
 template:
   - trigger:
-    - platform: time_pattern
-      minutes: 1
-      second: 0
+      - platform: time_pattern
+        minutes: 1
+        seconds: 0
+      - platform: event 
+        event_type: event_template_reloaded
+      - platform: homeassistant
+        event: start
     binary_sensor:
-    - name: price_in_15_lowest_hours
-      state: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:15])
+      - name: "current_hour_among_8_cheapest_today"
+        state: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:8])
         or (states(''sensor.tibber_price_sorted'') in [''unknown'', ''unavailable'',
         ''ERROR''])}}'
-
+      - name: "current_hour_among_16_cheapest_today"
+        state: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:16])
+        or (states(''sensor.tibber_price_sorted'') in [''unknown'', ''unavailable'',
+        ''ERROR''])}}'
+    sensor:
+      - name: "current_hour_price_rating_today"
+        state: '{{ states("sensor.tibber_price_sorted").split(",").index("{0}".format(now().hour)) }}'
 rest:
   - scan_interval: 360001
     resource: https://api.tibber.com/v1-beta/gql
