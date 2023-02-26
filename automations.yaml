@@ -21,13 +21,13 @@
         state: '''VERY_EXPENSIVE'''
     then:
     - type: turn_off
-      device_id: 7c651e89aa471541605601aa383fbbc7
-      entity_id: switch.noe_annet_socket
+      device_id: 8fd91bf5376be93746c2f18a666afc26
+      entity_id: switch.panelovn_teknisk_bod_socket
       domain: switch
     else:
     - type: turn_on
-      device_id: 7c651e89aa471541605601aa383fbbc7
-      entity_id: switch.noe_annet_socket
+      device_id: 8fd91bf5376be93746c2f18a666afc26
+      entity_id: switch.panelovn_teknisk_bod_socket
       domain: switch
   mode: single
 - id: '1673516310252'
@@ -128,32 +128,6 @@
     entity_id: switch.noe_annet_socket
     domain: switch
   mode: single
-- id: '1673848477996'
-  alias: På halve døgnet
-  description: ''
-  trigger:
-  - platform: time_pattern
-    hours: '*'
-    minutes: '1'
-    seconds: '0'
-  condition: []
-  action:
-  - if:
-    - condition: template
-      value_template: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:15])
-        or (states(''sensor.tibber_price_sorted'') in [''unknown'', ''unavailable'',
-        ''ERROR''])}}'
-    then:
-    - type: turn_on
-      device_id: 1dc1b18994f4b9d6ad9b6433bba1462d
-      entity_id: switch.panelovn_kjellerstue_socket
-      domain: switch
-    else:
-    - type: turn_off
-      device_id: 1dc1b18994f4b9d6ad9b6433bba1462d
-      entity_id: switch.panelovn_kjellerstue_socket
-      domain: switch
-  mode: single
 - id: '1674037454066'
   alias: Validate Tibber sensors
   description: ''
@@ -170,4 +144,88 @@
       skip_condition: true
     target:
       entity_id: automation.update_price_rating
+  mode: single
+- id: '1675942128141'
+  alias: VVB
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.current_hour_among_16_cheapest_today
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: binary_sensor.current_hour_among_16_cheapest_today
+      state: 'off'
+    then:
+    - type: turn_off
+      device_id: 37c3d9ab318edecc7a10a7d75c19a3dd
+      entity_id: switch.smart_plug_wifip131fwt_socket_1
+      domain: switch
+    else:
+    - type: turn_on
+      device_id: 37c3d9ab318edecc7a10a7d75c19a3dd
+      entity_id: switch.smart_plug_wifip131fwt_socket_1
+      domain: switch
+  mode: single
+- id: '1676288186427'
+  alias: Tuya error
+  description: ''
+  trigger:
+  - platform: event
+    event_type: system_log_event
+    event_data:
+      level: ERROR
+      name: tuya_io
+  condition: []
+  action: []
+  mode: single
+- id: '1677438280072'
+  alias: Kjellerstue
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.current_hour_among_16_cheapest_today
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: binary_sensor.current_hour_among_16_cheapest_today
+      state: 'off'
+    then:
+    - type: turn_off
+      device_id: a05a8ac11e485e802face93a4e788be4
+      entity_id: switch.smart_plug_wifip131fwt_2_socket_1
+      domain: switch
+    else:
+    - type: turn_on
+      device_id: a05a8ac11e485e802face93a4e788be4
+      entity_id: switch.smart_plug_wifip131fwt_2_socket_1
+      domain: switch
+  mode: single
+- id: '1677438484499'
+  alias: Tekniskbod
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.current_hour_among_8_cheapest_today
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: binary_sensor.current_hour_among_8_cheapest_today
+      state: 'off'
+    then:
+    - type: turn_off
+      device_id: 8fd91bf5376be93746c2f18a666afc26
+      entity_id: switch.panelovn_teknisk_bod_socket
+      domain: switch
+    else:
+    - type: turn_on
+      device_id: 8fd91bf5376be93746c2f18a666afc26
+      entity_id: switch.panelovn_teknisk_bod_socket
+      domain: switch
   mode: single

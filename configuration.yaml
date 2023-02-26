@@ -15,6 +15,9 @@ tts:
 #  logs:
 #    homeassistant.components.rest: debug
 
+system_log:
+  fire_event: true
+
 recorder:
  commit_interval: 60
  purge_keep_days: 14
@@ -48,6 +51,10 @@ template:
     binary_sensor:
       - name: "current_hour_among_8_cheapest_today"
         state: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:8])
+        or (states(''sensor.tibber_price_sorted'') in [''unknown'', ''unavailable'',
+        ''ERROR''])}}'
+      - name: "current_hour_among_12_cheapest_today"
+        state: '{{("{0}".format(now().hour) in (states(''sensor.tibber_price_sorted'').split('',''))[0:12])
         or (states(''sensor.tibber_price_sorted'') in [''unknown'', ''unavailable'',
         ''ERROR''])}}'
       - name: "current_hour_among_16_cheapest_today"
