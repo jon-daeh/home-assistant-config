@@ -173,13 +173,38 @@
   alias: Tuya error
   description: ''
   trigger:
-  - platform: event
-    event_type: system_log_event
-    event_data:
-      level: ERROR
-      name: tuya_io
-  condition: []
-  action: []
+  - platform: time_pattern
+    minutes: '30'
+    hours: '*'
+  condition:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: '{{ states("switch.smart_plug_wifip131fwt_socket_1") != states(''binary_sensor.current_hour_among_16_cheapest_today'')
+        }}'
+    - condition: template
+      value_template: '{{ states("switch.smart_plug_wifip131fwt_2_socket_1") != states("binary_sensor.current_hour_among_16_cheapest_today")
+        }}'
+    - condition: template
+      value_template: '{{ states("switch.panelovn_teknisk_bod_socket") != states("binary_sensor.current_hour_among_8_cheapest_today")
+        }}'
+  action:
+  - service: homeassistant.reload_config_entry
+    data: {}
+    target:
+      entity_id: switch.smart_plug_wifip131fwt_socket_1
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - service: automation.trigger
+    data: {}
+    target:
+      entity_id:
+      - automation.vvb
+      - automation.kjellerstue
+      - automation.tekniskbod
   mode: single
 - id: '1677438280072'
   alias: Kjellerstue
